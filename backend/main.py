@@ -56,11 +56,6 @@ if "cpu_offload" not in model_config:
 
 # Global variable for the pipeline
 pipe = None
-current_status = {
-    "progress": 0,
-    "message": "Idle",
-    "is_generating": False
-}
 
 def get_pipeline():
     global pipe
@@ -69,7 +64,6 @@ def get_pipeline():
             raise HTTPException(status_code=500, detail="ZImagePipeline class not available. Install diffusers from source.")
             
         print(f"Loading model {model_config['model_id']}...")
-        current_status["message"] = "Loading Model..."
         
         if model_config['cache_dir']:
             print(f"Using cache directory: {model_config['cache_dir']}")
@@ -93,10 +87,8 @@ def get_pipeline():
                 pipe.to(device)
                 
             print(f"Model loaded on {device}")
-            current_status["message"] = "Model Loaded"
         except Exception as e:
             print(f"Error loading model: {e}")
-            current_status["message"] = f"Error: {str(e)}"
             raise e
     return pipe
 
@@ -124,10 +116,6 @@ async def set_model_path(req: SettingsRequest):
 async def get_settings():
     return model_config
 
-@app.get("/status")
-async def get_status():
-    return current_status
-
 class GenerateRequest(BaseModel):
     prompt: str
     height: int = 1024
@@ -138,17 +126,11 @@ class GenerateRequest(BaseModel):
 
 @app.post("/generate")
 def generate_image(req: GenerateRequest):
-    global current_status
-    
     # Validate dimensions
     if req.height % 16 != 0 or req.width % 16 != 0:
         raise HTTPException(status_code=400, detail="Height and Width must be divisible by 16.")
 
     try:
-        current_status["is_generating"] = True
-        current_status["progress"] = 0
-        current_status["message"] = "Starting Generation..."
-        
         pipeline = get_pipeline()
         
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -158,15 +140,7 @@ def generate_image(req: GenerateRequest):
         
         # Run inference
         print(f"Generating with prompt: {req.prompt}")
-        current_status["message"] = "Generating..."
         
-        # Define a callback wrapper that matches diffusers signature
-        def callback_wrapper(pipe, step_index, timestep, callback_kwargs):
-            # Calculate progress based on total steps
-            progress = int(((step_index + 1) / req.steps) * 100)
-            current_status["progress"] = progress
-            return callback_kwargs
-
         image = pipeline(
             prompt=req.prompt,
             height=req.height,
@@ -174,25 +148,16 @@ def generate_image(req: GenerateRequest):
             num_inference_steps=req.steps,
             guidance_scale=req.guidance_scale,
             generator=generator,
-            callback_on_step_end=callback_wrapper,
         ).images[0]
-        
-        current_status["progress"] = 100
-        current_status["message"] = "Processing Image..."
         
         # Convert to base64
         buffered = io.BytesIO()
         image.save(buffered, format="PNG")
         img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
         
-        current_status["is_generating"] = False
-        current_status["message"] = "Idle"
-        
         return {"image": f"data:image/png;base64,{img_str}"}
     except Exception as e:
         print(f"Error generating image: {e}")
-        current_status["is_generating"] = False
-        current_status["message"] = f"Error: {str(e)}"
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")

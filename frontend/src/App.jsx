@@ -10,7 +10,8 @@ import {
   FolderOpen,
   X,
   Sparkles,
-  Save
+  Save,
+  Github
 } from 'lucide-react'
 import './App.css'
 
@@ -238,25 +239,53 @@ function App() {
                 }}>6B parameters</span>
               </div>
             </div>
-            <button
-              onClick={() => setShowSettings(true)}
-              style={{
-                padding: '8px',
-                borderRadius: 'var(--radius-sm)',
-                color: 'var(--text-secondary)',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'
-                e.currentTarget.style.color = 'white'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-                e.currentTarget.style.color = 'var(--text-secondary)'
-              }}
-            >
-              <Settings size={18} />
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <a
+                href="https://github.com/Aaryan-Kapoor/z-image-turbo"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '8px',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text-secondary)',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'
+                  e.currentTarget.style.color = 'white'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.color = 'var(--text-secondary)'
+                }}
+                title="View on GitHub"
+              >
+                <Github size={18} />
+              </a>
+              <button
+                onClick={() => setShowSettings(true)}
+                style={{
+                  padding: '8px',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text-secondary)',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'
+                  e.currentTarget.style.color = 'white'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.color = 'var(--text-secondary)'
+                }}
+                title="Settings"
+              >
+                <Settings size={18} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -467,7 +496,7 @@ function App() {
                   onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
                   title="Reset to Random"
                 >
-                  RND
+                  <span style={{ color: 'white' }}>RND</span>
                 </button>
               </div>
             </div>
@@ -485,10 +514,10 @@ function App() {
               width: '8px',
               height: '8px',
               borderRadius: '50%',
-              backgroundColor: '#22c55e',
-              boxShadow: '0 0 8px rgba(34, 197, 94, 0.5)'
+              backgroundColor: loading ? '#eab308' : '#22c55e',
+              boxShadow: loading ? '0 0 8px rgba(234, 179, 8, 0.5)' : '0 0 8px rgba(34, 197, 94, 0.5)'
             }}></div>
-            <span>System Ready</span>
+            <span>{loading ? 'Generating...' : 'System Ready'}</span>
           </div>
         </div>
       </div>
@@ -509,9 +538,8 @@ function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 24px',
-          backgroundColor: 'rgba(15, 15, 15, 0.5)',
-          backdropFilter: 'blur(8px)'
+          padding: '0 32px',
+          backgroundColor: 'var(--bg-secondary)'
         }}>
           <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-secondary)' }}>
             Workspace / <span style={{ color: 'white' }}>New Generation</span>

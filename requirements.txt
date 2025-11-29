@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+torch
+transformers
+accelerate
+protobuf
+sentencepiece
+git+https://github.com/huggingface/diffusers.git
