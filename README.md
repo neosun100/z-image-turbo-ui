@@ -114,6 +114,106 @@ python main.py
 
 Visit `http://localhost:8000` to start!
 
+## 🔌 MCP Integration
+
+Z-Image-Turbo provides a Model Context Protocol (MCP) server that allows AI assistants and other tools to generate images programmatically.
+
+### Quick Start with MCP
+
+1. **Start the Z-Image-Turbo backend:**
+```bash
+cd backend
+python main.py
+```
+
+2. **Install the MCP server in Claude Desktop:**
+```bash
+# Install dependencies
+pip install mcp httpx
+
+# Add to Claude Desktop configuration
+# On macOS: ~/Library/Application Support/Claude/claude_desktop_config.json
+# On Windows: %APPDATA%\Claude\claude_desktop_config.json
+```
+
+Add this configuration:
+```json
+{
+  "mcpServers": {
+    "z-image-turbo": {
+      "command": "python",
+      "args": ["/path/to/z-image-turbo/mcp_server.py"]
+    }
+  }
+}
+```
+
+3. **Use in Claude or other MCP clients:**
+```
+Generate an image of a sunset over mountains, 1920x1080 resolution
+```
+
+### MCP Tools Available
+
+#### `generate_image`
+Generate images from text prompts with full control over parameters.
+
+**Parameters:**
+- `prompt` (required): Text description of the image
+- `negative_prompt`: Elements to avoid (optional)
+- `width`: Image width, 256-4096, multiple of 16 (default: 1024)
+- `height`: Image height, 256-4096, multiple of 16 (default: 1024)
+- `steps`: Inference steps, recommended 8 (default: 8)
+- `guidance_scale`: Guidance scale (default: 0.0)
+- `seed`: Random seed for reproducibility, -1 for random (default: -1)
+- `num_images`: Number of images to generate, 1-12 (default: 1)
+- `enhance_prompt`: Auto-enhance prompt with quality keywords (default: false)
+
+**Example:**
+```python
+generate_image(
+    prompt="a serene lake at sunset with mountains in the background",
+    width=1920,
+    height=1080,
+    steps=8,
+    num_images=2
+)
+```
+
+### MCP Resources
+
+#### `preset://resolutions`
+Get a comprehensive list of 51+ resolution presets organized by aspect ratio (1:1, 3:4, 4:3, 16:9, 9:16, 21:9, 9:21, 32:9, 9:32).
+
+### MCP Prompts
+
+#### `create_prompt_template`
+Generate optimized prompt templates for different art styles.
+
+**Parameters:**
+- `subject`: Main subject of the image
+- `style`: Art style (photorealistic, anime, oil painting, digital art, watercolor, sketch)
+
+**Example:**
+```python
+create_prompt_template(
+    subject="a cat sitting on a windowsill",
+    style="anime"
+)
+# Returns: "a cat sitting on a windowsill, anime style, highly detailed, vibrant colors, studio quality"
+```
+
+### Testing the MCP Server
+
+Test the MCP server directly:
+```bash
+# Install MCP inspector
+npm install -g @modelcontextprotocol/inspector
+
+# Run the inspector
+npx @modelcontextprotocol/inspector python mcp_server.py
+```
+
 ## 📖 Usage Guide
 
 ### Basic Operations

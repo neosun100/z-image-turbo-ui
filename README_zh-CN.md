@@ -114,6 +114,106 @@ python main.py
 
 访问 `http://localhost:8000` 开始使用！
 
+## 🔌 MCP 集成
+
+Z-Image-Turbo 提供了模型上下文协议（MCP）服务器，允许 AI 助手和其他工具以编程方式生成图片。
+
+### MCP 快速开始
+
+1. **启动 Z-Image-Turbo 后端：**
+```bash
+cd backend
+python main.py
+```
+
+2. **在 Claude Desktop 中安装 MCP 服务器：**
+```bash
+# 安装依赖
+pip install mcp httpx
+
+# 添加到 Claude Desktop 配置
+# macOS: ~/Library/Application Support/Claude/claude_desktop_config.json
+# Windows: %APPDATA%\Claude\claude_desktop_config.json
+```
+
+添加此配置：
+```json
+{
+  "mcpServers": {
+    "z-image-turbo": {
+      "command": "python",
+      "args": ["/path/to/z-image-turbo/mcp_server.py"]
+    }
+  }
+}
+```
+
+3. **在 Claude 或其他 MCP 客户端中使用：**
+```
+生成一张山脉日落的图片，分辨率 1920x1080
+```
+
+### 可用的 MCP 工具
+
+#### `generate_image`
+从文本提示词生成图片，完全控制所有参数。
+
+**参数：**
+- `prompt`（必需）：图片的文本描述
+- `negative_prompt`：要避免的元素（可选）
+- `width`：图片宽度，256-4096，必须是 16 的倍数（默认：1024）
+- `height`：图片高度，256-4096，必须是 16 的倍数（默认：1024）
+- `steps`：推理步数，推荐 8（默认：8）
+- `guidance_scale`：引导强度（默认：0.0）
+- `seed`：随机种子，用于复现结果，-1 表示随机（默认：-1）
+- `num_images`：生成图片数量，1-12（默认：1）
+- `enhance_prompt`：自动增强提示词（默认：false）
+
+**示例：**
+```python
+generate_image(
+    prompt="宁静的湖泊日落，背景是山脉",
+    width=1920,
+    height=1080,
+    steps=8,
+    num_images=2
+)
+```
+
+### MCP 资源
+
+#### `preset://resolutions`
+获取 51+ 种分辨率预设的完整列表，按宽高比组织（1:1, 3:4, 4:3, 16:9, 9:16, 21:9, 9:21, 32:9, 9:32）。
+
+### MCP 提示词模板
+
+#### `create_prompt_template`
+为不同艺术风格生成优化的提示词模板。
+
+**参数：**
+- `subject`：图片的主要主题
+- `style`：艺术风格（photorealistic, anime, oil painting, digital art, watercolor, sketch）
+
+**示例：**
+```python
+create_prompt_template(
+    subject="一只猫坐在窗台上",
+    style="anime"
+)
+# 返回："一只猫坐在窗台上, anime style, highly detailed, vibrant colors, studio quality"
+```
+
+### 测试 MCP 服务器
+
+直接测试 MCP 服务器：
+```bash
+# 安装 MCP inspector
+npm install -g @modelcontextprotocol/inspector
+
+# 运行 inspector
+npx @modelcontextprotocol/inspector python mcp_server.py
+```
+
 ## 📖 使用指南
 
 ### 基础操作

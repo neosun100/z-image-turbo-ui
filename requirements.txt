@@ -8,3 +8,7 @@ sentencepiece
 pillow
 python-multipart
 git+https://github.com/huggingface/diffusers.git
+
+# MCP Server
+mcp>=1.0.0
+httpx>=0.27.0
