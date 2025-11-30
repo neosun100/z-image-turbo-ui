@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Help from './Help'
-import { Zap, Download, Loader2, RefreshCw, Sparkles, History, Trash2, HelpCircle, Image as ImageIcon } from 'lucide-react'
+import { Zap, Download, Loader2, RefreshCw, Sparkles, History, Trash2, HelpCircle, Image as ImageIcon, Star, Github } from 'lucide-react'
 import './index.css'
 
 const translations = {
@@ -229,6 +229,43 @@ function App() {
   return (
     <div style={{ display: 'flex', height: '100vh', background: theme.bg, color: theme.text, fontSize: '15px' }}>
       
+      {/* GitHub Star 角标 */}
+      <a 
+        href="https://github.com/neosun100/z-image-turbo-ui" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        style={{ 
+          position: 'fixed', 
+          top: '20px', 
+          right: '20px', 
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '10px 16px',
+          background: 'linear-gradient(135deg, #667eea, #764ba2)',
+          color: '#fff',
+          borderRadius: '12px',
+          fontSize: '14px',
+          fontWeight: 600,
+          textDecoration: 'none',
+          boxShadow: '0 4px 20px rgba(102,126,234,0.4)',
+          transition: 'all 0.3s',
+          cursor: 'pointer'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 6px 25px rgba(102,126,234,0.5)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 4px 20px rgba(102,126,234,0.4)';
+        }}
+      >
+        <Star size={16} fill="#fff" />
+        <span>Star on GitHub</span>
+      </a>
+
       <div style={{ width: '520px', borderRight: `1px solid ${darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, display: 'flex', flexDirection: 'column', background: theme.sidebarBg, backdropFilter: 'blur(20px)' }}>
         
         <div style={{ padding: '24px', borderBottom: '1px solid rgba(255,255,255,0.1)', background: 'linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2))' }}>
