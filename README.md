@@ -116,28 +116,24 @@ Visit `http://localhost:8000` to start!
 
 ## 🔌 MCP Integration
 
-Z-Image-Turbo provides a Model Context Protocol (MCP) server that allows AI assistants and other tools to generate images programmatically.
+Z-Image-Turbo provides a Model Context Protocol (MCP) server integrated into the main backend, allowing AI assistants and other tools to generate images programmatically.
 
 ### Quick Start with MCP
 
-1. **Start the Z-Image-Turbo backend:**
+1. **Start the Z-Image-Turbo backend (includes MCP server):**
 ```bash
 cd backend
 python main.py
 ```
 
-2. **Start the MCP server:**
-```bash
-# Install dependencies first
-pip install mcp httpx
+The backend serves:
+- **Web UI**: `http://localhost:8000`
+- **API**: `http://localhost:8000/generate`, `/img2img`, etc.
+- **MCP Server**: `http://localhost:8000/mcp`
 
-# Run the MCP server
-python mcp_server.py
-```
+All services run on the same port (8000)!
 
-The MCP server will start at `http://localhost:3000/mcp`
-
-3. **Connect from Claude Desktop:**
+2. **Connect from Claude Desktop:**
 
 Add to your Claude Desktop configuration:
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
@@ -147,13 +143,13 @@ Add to your Claude Desktop configuration:
 {
   "mcpServers": {
     "z-image-turbo": {
-      "url": "http://localhost:3000/mcp"
+      "url": "http://localhost:8000/mcp"
     }
   }
 }
 ```
 
-4. **Use in Claude:**
+3. **Use in Claude:**
 ```
 Generate an image of a sunset over mountains, 1920x1080 resolution
 ```
@@ -224,12 +220,12 @@ npm install -g @modelcontextprotocol/inspector
 # Run the inspector
 npx @modelcontextprotocol/inspector
 
-# Connect to: http://localhost:3000/mcp
+# Connect to: http://localhost:8000/mcp
 ```
 
 Or test with curl:
 ```bash
-curl http://localhost:3000/mcp
+curl http://localhost:8000/mcp
 ```
 
 ## 📖 Usage Guide

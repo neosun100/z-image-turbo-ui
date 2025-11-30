@@ -116,28 +116,24 @@ python main.py
 
 ## 🔌 MCP 集成
 
-Z-Image-Turbo 提供了模型上下文协议（MCP）服务器，允许 AI 助手和其他工具以编程方式生成图片。
+Z-Image-Turbo 提供了集成在主后端中的模型上下文协议（MCP）服务器，允许 AI 助手和其他工具以编程方式生成图片。
 
 ### MCP 快速开始
 
-1. **启动 Z-Image-Turbo 后端：**
+1. **启动 Z-Image-Turbo 后端（包含 MCP 服务器）：**
 ```bash
 cd backend
 python main.py
 ```
 
-2. **启动 MCP 服务器：**
-```bash
-# 先安装依赖
-pip install mcp httpx
+后端提供以下服务：
+- **Web UI**: `http://localhost:8000`
+- **API**: `http://localhost:8000/generate`, `/img2img` 等
+- **MCP 服务器**: `http://localhost:8000/mcp`
 
-# 运行 MCP 服务器
-python mcp_server.py
-```
+所有服务都在同一个端口（8000）上运行！
 
-MCP 服务器将在 `http://localhost:3000/mcp` 启动
-
-3. **从 Claude Desktop 连接：**
+2. **从 Claude Desktop 连接：**
 
 添加到 Claude Desktop 配置文件：
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
@@ -147,13 +143,13 @@ MCP 服务器将在 `http://localhost:3000/mcp` 启动
 {
   "mcpServers": {
     "z-image-turbo": {
-      "url": "http://localhost:3000/mcp"
+      "url": "http://localhost:8000/mcp"
     }
   }
 }
 ```
 
-4. **在 Claude 中使用：**
+3. **在 Claude 中使用：**
 ```
 生成一张山脉日落的图片，分辨率 1920x1080
 ```
@@ -224,12 +220,12 @@ npm install -g @modelcontextprotocol/inspector
 # 运行 inspector
 npx @modelcontextprotocol/inspector
 
-# 连接到：http://localhost:3000/mcp
+# 连接到：http://localhost:8000/mcp
 ```
 
 或使用 curl 测试：
 ```bash
-curl http://localhost:3000/mcp
+curl http://localhost:8000/mcp
 ```
 
 ## 📖 使用指南
