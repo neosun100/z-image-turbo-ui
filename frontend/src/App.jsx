@@ -225,8 +225,7 @@ function App() {
         style={{ 
           position: 'fixed', 
           top: '20px', 
-          left: '50%',
-          transform: 'translateX(-50%)',
+          right: '20px',
           zIndex: 10000,
           display: 'flex',
           alignItems: 'center',
@@ -567,11 +566,6 @@ function App() {
         <div style={{ flex: 1, padding: '32px', overflow: 'auto' }}>
           {images.length > 0 ? (
             <>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px', maxWidth: '1400px', margin: '0 auto 16px' }}>
-                <button onClick={downloadAll} style={{ padding: '12px 24px', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 15px rgba(102,126,234,0.3)' }}>
-                  <Download size={18} /> {t.downloadAll}
-                </button>
-              </div>
               <div className={`image-grid ${getGridCols(images.length)}`} style={{ width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
               {images.map((img, i) => (
                 <div key={i} onClick={() => setSelectedImageIndex(i)} className="hover-scale" style={{ position: 'relative', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px', background: 'rgba(0,0,0,0.2)' }}>
@@ -617,9 +611,14 @@ function App() {
             
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
               {images.length > 0 && (
-                <button onClick={generate} disabled={loading} style={{ padding: '16px 28px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontWeight: 600, borderRadius: '12px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  <RefreshCw size={18} /> {t.regenerate}
-                </button>
+                <>
+                  <button onClick={downloadAll} style={{ padding: '16px 28px', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', fontWeight: 600, borderRadius: '12px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(16,185,129,0.3)' }}>
+                    <Download size={18} /> {t.downloadAll}
+                  </button>
+                  <button onClick={generate} disabled={loading} style={{ padding: '16px 28px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontWeight: 600, borderRadius: '12px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <RefreshCw size={18} /> {t.regenerate}
+                  </button>
+                </>
               )}
               <button onClick={generate} disabled={loading || !prompt} style={{ padding: '16px 36px', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff', fontWeight: 700, borderRadius: '12px', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(102,126,234,0.4)', transition: 'all 0.3s' }}>
                 {loading ? <Loader2 className="animate-spin" size={20} /> : <Zap size={20} fill="#fff" />}
