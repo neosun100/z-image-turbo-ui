@@ -225,7 +225,8 @@ function App() {
         style={{ 
           position: 'fixed', 
           top: '20px', 
-          left: '540px', 
+          left: '50%',
+          transform: 'translateX(-50%)',
           zIndex: 10000,
           display: 'flex',
           alignItems: 'center',
