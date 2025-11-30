@@ -265,6 +265,6 @@ A: 1. 清除浏览器缓存
 
 ### 📱 关注公众号获取更多 AI 工具和更新
 
-<img src="https://img.aws.xin/uPic/扫码_搜索联合传播样式-标准色版.png" width="200" alt="微信公众号" />
+<img src="https://img.aws.xin/uPic/扫码_搜索联合传播样式-标准色版.png" alt="微信公众号" />
 
 </div>
