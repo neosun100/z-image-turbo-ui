@@ -3,8 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 venv/
+env/
 .env
 *.log
+*.pyc
+*.pyo
 
 # Node.js
 node_modules/
@@ -14,6 +17,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnp.*
+package-lock.json
 
 # IDEs
 .vscode/
@@ -25,5 +29,16 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# Config
-config.json
+# Model cache
+models/
+*.safetensors
+*.bin
+*.ckpt
+
+# Generated files
+outputs/
+generation_history.json
+presets.json
+
+# Docker
+.dockerignore

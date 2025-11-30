@@ -1,0 +1,388 @@
+import { useState, useEffect } from 'react'
+import Help from './Help'
+import { Zap, Download, Loader2, Settings, RefreshCw, Sparkles, History, Globe, Trash2, HelpCircle } from 'lucide-react'
+import './App.css'
+
+const translations = {
+  'zh-CN': {
+    title: 'Z-Image-Turbo',
+    subtitle: '6B参数',
+    prompt: '输入提示词...',
+    negativePrompt: '负面提示词（可选）',
+    generate: '生成',
+    generating: '生成中...',
+    parameters: '参数',
+    steps: '推理步数',
+    guidance: '引导强度',
+    dimensions: '尺寸',
+    seed: '随机种子',
+    numImages: '生成数量',
+    enhancePrompt: '增强提示词',
+    negativePromptLabel: '负面提示词',
+    settings: '设置',
+    history: '历史',
+    clearHistory: '清空历史',
+    download: '下载',
+    regenerate: '重新生成',
+    ready: '系统就绪',
+    modelLoaded: '模型已加载',
+    square: '方形',
+    portrait: '竖屏',
+    landscape: '横屏',
+    wide: '宽屏',
+    random: '随机'
+  },
+  'zh-TW': {
+    title: 'Z-Image-Turbo',
+    subtitle: '6B參數',
+    prompt: '輸入提示詞...',
+    negativePrompt: '負面提示詞（可選）',
+    generate: '生成',
+    generating: '生成中...',
+    parameters: '參數',
+    steps: '推理步數',
+    guidance: '引導強度',
+    dimensions: '尺寸',
+    seed: '隨機種子',
+    numImages: '生成數量',
+    enhancePrompt: '增強提示詞',
+    negativePromptLabel: '負面提示詞',
+    settings: '設置',
+    history: '歷史',
+    clearHistory: '清空歷史',
+    download: '下載',
+    regenerate: '重新生成',
+    ready: '系統就緒',
+    modelLoaded: '模型已加載',
+    square: '方形',
+    portrait: '豎屏',
+    landscape: '橫屏',
+    wide: '寬屏',
+    random: '隨機'
+  },
+  'en': {
+    title: 'Z-Image-Turbo',
+    subtitle: '6B Parameters',
+    prompt: 'Enter your prompt...',
+    negativePrompt: 'Negative prompt (optional)',
+    generate: 'Generate',
+    generating: 'Generating...',
+    parameters: 'Parameters',
+    steps: 'Inference Steps',
+    guidance: 'Guidance Scale',
+    dimensions: 'Dimensions',
+    seed: 'Seed',
+    numImages: 'Batch Size',
+    enhancePrompt: 'Enhance Prompt',
+    negativePromptLabel: 'Negative Prompt',
+    settings: 'Settings',
+    history: 'History',
+    clearHistory: 'Clear History',
+    download: 'Download',
+    regenerate: 'Regenerate',
+    ready: 'System Ready',
+    modelLoaded: 'Model Loaded',
+    square: 'Square',
+    portrait: 'Portrait',
+    landscape: 'Landscape',
+    wide: 'Wide',
+    random: 'Random'
+  },
+  'ja': {
+    title: 'Z-Image-Turbo',
+    subtitle: '6Bパラメータ',
+    prompt: 'プロンプトを入力...',
+    negativePrompt: 'ネガティブプロンプト（オプション）',
+    generate: '生成',
+    generating: '生成中...',
+    parameters: 'パラメータ',
+    steps: '推論ステップ',
+    guidance: 'ガイダンススケール',
+    dimensions: 'サイズ',
+    seed: 'シード',
+    numImages: 'バッチサイズ',
+    enhancePrompt: 'プロンプト強化',
+    negativePromptLabel: 'ネガティブプロンプト',
+    settings: '設定',
+    history: '履歴',
+    clearHistory: '履歴をクリア',
+    download: 'ダウンロード',
+    regenerate: '再生成',
+    ready: 'システム準備完了',
+    modelLoaded: 'モデル読み込み済み',
+    square: '正方形',
+    portrait: '縦',
+    landscape: '横',
+    wide: 'ワイド',
+    random: 'ランダム'
+  }
+}
+
+function App() {
+  const [lang, setLang] = useState('zh-CN')
+  const [showHelp, setShowHelp] = useState(false)
+  const [prompt, setPrompt] = useState('')
+  const [negativePrompt, setNegativePrompt] = useState('')
+  const [images, setImages] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
+  const [history, setHistory] = useState([])
+  const [settings, setSettings] = useState({
+    steps: 8,
+    guidance_scale: 0.0,
+    width: 1024,
+    height: 1024,
+    seed: -1,
+    num_images: 1,
+    enhance_prompt: false
+  })
+
+  const t = translations[lang]
+
+  useEffect(() => {
+    fetchHistory()
+  }, [])
+
+  const fetchHistory = async () => {
+    try {
+      const res = await fetch('/history')
+      const data = await res.json()
+      setHistory(data.slice(-10).reverse())
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const generate = async () => {
+    if (!prompt) return
+    setLoading(true)
+    try {
+      const res = await fetch('/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          prompt, 
+          negative_prompt: negativePrompt || null,
+          ...settings 
+        })
+      })
+      const data = await res.json()
+      if (data.images) {
+        setImages(data.images)
+        fetchHistory()
+      }
+    } catch (e) {
+      alert('Generation failed: ' + e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const clearHistory = async () => {
+    if (!confirm('Clear all history?')) return
+    try {
+      await fetch('/history', { method: 'DELETE' })
+      setHistory([])
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', background: '#0a0a0a', color: '#fff', fontSize: '15px' }}>
+      
+      {/* Sidebar */}
+      <div style={{ width: '380px', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column', background: '#111' }}>
+        
+        {/* Header */}
+        <div style={{ padding: '24px', borderBottom: '1px solid #222' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '36px', height: '36px', background: '#fff', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Zap size={22} color="#000" fill="#000" />
+              </div>
+              <div>
+                <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>{t.title}</h1>
+                <span style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>{t.subtitle}</span>
+              </div>
+            </div>
+            <button onClick={() => setShowHelp(true)} style={{ padding: '8px', background: '#222', border: '1px solid #333', borderRadius: '6px', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+              <HelpCircle size={16} />
+            </button>
+            <select value={lang} onChange={e => setLang(e.target.value)} style={{ padding: '8px', background: '#222', border: '1px solid #333', borderRadius: '6px', color: '#fff', fontSize: '13px' }}>
+              <option value="zh-CN">简体中文</option>
+              <option value="zh-TW">繁體中文</option>
+              <option value="en">English</option>
+              <option value="ja">日本語</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Parameters */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            
+            <div style={{ fontSize: '13px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Sparkles size={14} /> {t.parameters}
+            </div>
+
+            {/* Steps */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <label style={{ fontSize: '14px' }}>{t.steps}</label>
+                <span style={{ fontSize: '13px', fontFamily: 'monospace', background: '#222', padding: '4px 10px', borderRadius: '4px' }}>{settings.steps}</span>
+              </div>
+              <input type="range" min="1" max="50" value={settings.steps} onChange={e => setSettings({...settings, steps: parseInt(e.target.value)})} style={{ width: '100%' }} />
+            </div>
+
+            {/* Guidance */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <label style={{ fontSize: '14px' }}>{t.guidance}</label>
+                <span style={{ fontSize: '13px', fontFamily: 'monospace', background: '#222', padding: '4px 10px', borderRadius: '4px' }}>{settings.guidance_scale.toFixed(1)}</span>
+              </div>
+              <input type="range" min="0" max="10" step="0.1" value={settings.guidance_scale} onChange={e => setSettings({...settings, guidance_scale: parseFloat(e.target.value)})} style={{ width: '100%' }} />
+            </div>
+
+            {/* Dimensions */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <label style={{ fontSize: '14px' }}>{t.dimensions}</label>
+                <span style={{ fontSize: '12px', color: '#888' }}>{settings.width} x {settings.height}</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '16px' }}>
+                {[
+                  { label: t.square, w: 1024, h: 1024 },
+                  { label: t.portrait, w: 768, h: 1024 },
+                  { label: t.landscape, w: 1024, h: 768 },
+                  { label: t.wide, w: 1280, h: 720 }
+                ].map(preset => (
+                  <button key={preset.label} onClick={() => setSettings({...settings, width: preset.w, height: preset.h})} style={{ padding: '10px 6px', background: settings.width === preset.w && settings.height === preset.h ? '#fff' : '#222', color: settings.width === preset.w && settings.height === preset.h ? '#000' : '#fff', border: '1px solid #333', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}>
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '12px', color: '#888', display: 'block', marginBottom: '6px' }}>Width</label>
+                  <input type="number" min="256" max="2048" step="16" value={settings.width} onChange={e => setSettings({...settings, width: parseInt(e.target.value)})} style={{ width: '100%', padding: '8px', background: '#222', border: '1px solid #333', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '12px', color: '#888', display: 'block', marginBottom: '6px' }}>Height</label>
+                  <input type="number" min="256" max="2048" step="16" value={settings.height} onChange={e => setSettings({...settings, height: parseInt(e.target.value)})} style={{ width: '100%', padding: '8px', background: '#222', border: '1px solid #333', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
+                </div>
+              </div>
+            </div>
+
+            {/* Seed */}
+            <div>
+              <label style={{ fontSize: '14px', display: 'block', marginBottom: '12px' }}>{t.seed}</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input type="number" value={settings.seed} onChange={e => setSettings({...settings, seed: parseInt(e.target.value)})} style={{ flex: 1, padding: '10px', background: '#222', border: '1px solid #333', borderRadius: '6px', color: '#fff', fontSize: '14px', fontFamily: 'monospace' }} />
+                <button onClick={() => setSettings({...settings, seed: -1})} style={{ padding: '10px 16px', background: '#222', border: '1px solid #333', borderRadius: '6px', color: '#fff', fontSize: '13px', fontWeight: 600 }}>
+                  {t.random}
+                </button>
+              </div>
+            </div>
+
+            {/* Batch Size */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <label style={{ fontSize: '14px' }}>{t.numImages}</label>
+                <span style={{ fontSize: '13px', fontFamily: 'monospace', background: '#222', padding: '4px 10px', borderRadius: '4px' }}>{settings.num_images}</span>
+              </div>
+              <input type="range" min="1" max="4" value={settings.num_images} onChange={e => setSettings({...settings, num_images: parseInt(e.target.value)})} style={{ width: '100%' }} />
+            </div>
+
+            {/* Enhance Prompt */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', background: '#1a1a1a', borderRadius: '8px', border: '1px solid #222' }}>
+              <input type="checkbox" checked={settings.enhance_prompt} onChange={e => setSettings({...settings, enhance_prompt: e.target.checked})} style={{ width: '18px', height: '18px' }} />
+              <label style={{ fontSize: '14px', flex: 1 }}>{t.enhancePrompt}</label>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '16px 24px', borderTop: '1px solid #222', display: 'flex', gap: '12px' }}>
+          <button onClick={() => setShowHistory(!showHistory)} style={{ flex: 1, padding: '12px', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <History size={16} /> {t.history}
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        
+        {/* Image Display */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px', overflow: 'auto', background: '#0a0a0a' }}>
+          {images.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: images.length > 1 ? 'repeat(2, 1fr)' : '1fr', gap: '16px', maxWidth: '100%' }}>
+              {images.map((img, i) => (
+                <div key={i} style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid #222' }}>
+                  <img src={img.image} alt="" style={{ maxWidth: '100%', maxHeight: '70vh', display: 'block' }} />
+                  <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', gap: '8px' }}>
+                    <button onClick={() => { const a = document.createElement('a'); a.href = img.image; a.download = `z-image-${img.seed}.png`; a.click() }} style={{ padding: '10px', background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', color: '#fff' }}>
+                      <Download size={18} />
+                    </button>
+                  </div>
+                  <div style={{ position: 'absolute', bottom: '12px', left: '12px', padding: '8px 12px', background: 'rgba(0,0,0,0.8)', borderRadius: '6px', fontSize: '12px', fontFamily: 'monospace', color: '#888' }}>
+                    Seed: {img.seed}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', color: '#555' }}>
+              <Sparkles size={64} strokeWidth={1} style={{ margin: '0 auto 24px' }} />
+              <p style={{ fontSize: '18px' }}>{t.prompt}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Input Area */}
+        <div style={{ borderTop: '1px solid #222', background: '#111', padding: '24px' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <textarea value={prompt} onChange={e => setPrompt(e.target.value)} placeholder={t.prompt} style={{ width: '100%', background: '#1a1a1a', border: '1px solid #333', borderRadius: '10px', padding: '16px', color: '#fff', fontSize: '15px', resize: 'none', height: '80px', fontFamily: 'inherit' }} />
+            <textarea value={negativePrompt} onChange={e => setNegativePrompt(e.target.value)} placeholder={t.negativePrompt} style={{ width: '100%', background: '#1a1a1a', border: '1px solid #333', borderRadius: '10px', padding: '16px', color: '#fff', fontSize: '15px', resize: 'none', height: '60px', fontFamily: 'inherit' }} />
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              {images.length > 0 && (
+                <button onClick={generate} disabled={loading} style={{ padding: '14px 24px', background: '#222', border: '1px solid #333', color: '#fff', fontWeight: 600, borderRadius: '10px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <RefreshCw size={18} /> {t.regenerate}
+                </button>
+              )}
+              <button onClick={generate} disabled={loading || !prompt} style={{ padding: '14px 32px', background: '#fff', color: '#000', fontWeight: 700, borderRadius: '10px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '10px', border: 'none' }}>
+                {loading ? <Loader2 className="animate-spin" size={20} /> : <Zap size={20} fill="#000" />}
+                {loading ? t.generating : t.generate}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* History Panel */}
+      {showHistory && (
+        <div style={{ width: '320px', borderLeft: '1px solid #222', background: '#111', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '20px', borderBottom: '1px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>{t.history}</h3>
+            <button onClick={clearHistory} style={{ padding: '8px', background: '#222', border: '1px solid #333', borderRadius: '6px', color: '#fff' }}>
+              <Trash2 size={16} />
+            </button>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+            {history.map((item, i) => (
+              <div key={i} onClick={() => { setPrompt(item.prompt); setNegativePrompt(item.negative_prompt || ''); setSettings({...settings, ...item.params}) }} style={{ padding: '12px', background: '#1a1a1a', borderRadius: '8px', marginBottom: '12px', cursor: 'pointer', border: '1px solid #222' }}>
+                <p style={{ fontSize: '13px', margin: '0 0 8px 0', color: '#fff', lineHeight: 1.4 }}>{item.prompt.slice(0, 80)}...</p>
+                <div style={{ fontSize: '11px', color: '#666' }}>{item.params.width}x{item.params.height} • {item.params.steps} steps</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+    </div>
+      {showHelp && <Help lang={lang} onClose={() => setShowHelp(false)} />}
+  )
+}
+
+export default App

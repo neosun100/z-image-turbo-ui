@@ -1,0 +1,16 @@
+services:
+  z-image-turbo:
+    build: .
+    container_name: z-image-turbo
+    ports:
+      - "8888:8000"
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - HF_HOME=/models
+      - NVIDIA_VISIBLE_DEVICES=${GPU_ID:-2}
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    volumes:
+      - ./models:/models
+      - ./outputs:/app/outputs
+    runtime: nvidia
+    restart: unless-stopped
