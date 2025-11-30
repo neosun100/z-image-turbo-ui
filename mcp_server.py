@@ -3,20 +3,22 @@
 Z-Image-Turbo MCP Server
 
 Provides text-to-image generation capabilities through the Model Context Protocol.
+Run with: python mcp_server.py
+Access at: http://localhost:3000/mcp
 """
 
 import asyncio
-import base64
-from io import BytesIO
 from typing import Any
 
 import httpx
 from mcp.server.fastmcp import FastMCP
 
-# Create MCP server
+# Create MCP server with HTTP transport
 mcp = FastMCP(
     "Z-Image-Turbo",
-    instructions="Text-to-image generation using Tongyi-MAI Z-Image-Turbo model. Supports 51+ resolution presets and custom parameters."
+    instructions="Text-to-image generation using Tongyi-MAI Z-Image-Turbo model. Supports 51+ resolution presets and custom parameters.",
+    json_response=True,
+    stateless_http=True
 )
 
 # Backend API endpoint
@@ -85,61 +87,38 @@ async def generate_image(
 
 @mcp.resource("preset://resolutions")
 def get_resolution_presets() -> str:
-    """Get available resolution presets organized by aspect ratio."""
+    """Get available resolution presets with exact dimensions."""
     return """# Z-Image-Turbo Resolution Presets
 
 ## Square (1:1)
-- 512×512 - Small square
-- 768×768 - Medium square
-- 1024×1024 - Standard square (1K)
-- 1536×1536 - Large square (1.5K)
-- 2048×2048 - Extra large square (2K)
+512×512, 768×768, 1024×1024, 1536×1536, 2048×2048
 
 ## Portrait (3:4)
-- 768×1024 - Small portrait
-- 1152×1536 - Medium portrait
-- 1536×2048 - Large portrait
-- 1728×2304 - Extra large portrait
+768×1024, 1152×1536, 1536×2048, 1728×2304
 
 ## Landscape (4:3)
-- 1024×768 - Small landscape
-- 1536×1152 - Medium landscape
-- 2048×1536 - Large landscape
-- 2304×1728 - Extra large landscape
+1024×768, 1536×1152, 2048×1536, 2304×1728
 
 ## Widescreen Landscape (16:9)
-- 1280×720 - HD 720p
-- 1920×1080 - Full HD 1080p
-- 2560×1440 - 2K QHD
-- 3200×1800 - Extra large widescreen
+1280×720, 1920×1080, 2560×1440, 3200×1800
 
 ## Widescreen Portrait (9:16)
-- 720×1280 - Vertical HD
-- 1080×1920 - Vertical Full HD
-- 1440×2560 - Vertical 2K
-- 1800×3200 - Vertical extra large
+720×1280, 1080×1920, 1440×2560, 1800×3200
 
 ## Ultrawide Landscape (21:9)
-- 1344×576 - Small ultrawide
-- 1680×720 - Medium ultrawide
-- 2352×1008 - Large ultrawide
+1344×576, 1680×720, 1792×768, 2016×864, 2352×1008
 
 ## Ultrawide Portrait (9:21)
-- 576×1344 - Vertical small ultrawide
-- 720×1680 - Vertical medium ultrawide
-- 1008×2352 - Vertical large ultrawide
+576×1344, 720×1680, 768×1792, 864×2016, 1008×2352
 
 ## Extreme Wide Landscape (32:9)
-- 1792×512 - Small extreme wide
-- 2560×720 - Medium extreme wide
-- 3200×912 - Large extreme wide
+1792×512, 2048×576, 2304×656, 2560×720, 2816×800, 3200×912
 
 ## Extreme Wide Portrait (9:32)
-- 512×1792 - Vertical small extreme wide
-- 720×2560 - Vertical medium extreme wide
-- 912×3200 - Vertical large extreme wide
+512×1792, 576×2048, 656×2304, 720×2560, 800×2816, 912×3200
 
 All resolutions must be multiples of 16. Range: 256-4096 pixels.
+Use these exact dimensions with the generate_image tool.
 """
 
 @mcp.prompt()
@@ -148,7 +127,7 @@ def create_prompt_template(subject: str, style: str = "photorealistic") -> str:
     
     Args:
         subject: Main subject of the image
-        style: Art style (photorealistic, anime, oil painting, digital art, etc.)
+        style: Art style (photorealistic, anime, oil painting, digital art, watercolor, sketch)
     """
     styles = {
         "photorealistic": "masterpiece, highly detailed, 8k, photorealistic, professional photography",
@@ -163,4 +142,5 @@ def create_prompt_template(subject: str, style: str = "photorealistic") -> str:
     return f"{subject}, {style_keywords}"
 
 if __name__ == "__main__":
-    mcp.run(transport="stdio")
+    # Run with streamable HTTP transport on port 3000
+    mcp.run(transport="streamable-http", port=3000)

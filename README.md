@@ -126,29 +126,34 @@ cd backend
 python main.py
 ```
 
-2. **Install the MCP server in Claude Desktop:**
+2. **Start the MCP server:**
 ```bash
-# Install dependencies
+# Install dependencies first
 pip install mcp httpx
 
-# Add to Claude Desktop configuration
-# On macOS: ~/Library/Application Support/Claude/claude_desktop_config.json
-# On Windows: %APPDATA%\Claude\claude_desktop_config.json
+# Run the MCP server
+python mcp_server.py
 ```
 
-Add this configuration:
+The MCP server will start at `http://localhost:3000/mcp`
+
+3. **Connect from Claude Desktop:**
+
+Add to your Claude Desktop configuration:
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
 ```json
 {
   "mcpServers": {
     "z-image-turbo": {
-      "command": "python",
-      "args": ["/path/to/z-image-turbo/mcp_server.py"]
+      "url": "http://localhost:3000/mcp"
     }
   }
 }
 ```
 
-3. **Use in Claude or other MCP clients:**
+4. **Use in Claude:**
 ```
 Generate an image of a sunset over mountains, 1920x1080 resolution
 ```
@@ -183,7 +188,13 @@ generate_image(
 ### MCP Resources
 
 #### `preset://resolutions`
-Get a comprehensive list of 51+ resolution presets organized by aspect ratio (1:1, 3:4, 4:3, 16:9, 9:16, 21:9, 9:21, 32:9, 9:32).
+Get a comprehensive list of 51+ resolution presets with exact dimensions organized by aspect ratio:
+- Square (1:1): 512×512, 768×768, 1024×1024, 1536×1536, 2048×2048
+- Portrait (3:4): 768×1024, 1152×1536, 1536×2048, 1728×2304
+- Landscape (4:3): 1024×768, 1536×1152, 2048×1536, 2304×1728
+- Widescreen (16:9 & 9:16): 1280×720, 1920×1080, 2560×1440, etc.
+- Ultrawide (21:9 & 9:21): 1344×576, 1680×720, 2352×1008, etc.
+- Extreme Wide (32:9 & 9:32): 1792×512, 2560×720, 3200×912, etc.
 
 ### MCP Prompts
 
@@ -205,13 +216,20 @@ create_prompt_template(
 
 ### Testing the MCP Server
 
-Test the MCP server directly:
+Test the MCP server with the MCP Inspector:
 ```bash
 # Install MCP inspector
 npm install -g @modelcontextprotocol/inspector
 
 # Run the inspector
-npx @modelcontextprotocol/inspector python mcp_server.py
+npx @modelcontextprotocol/inspector
+
+# Connect to: http://localhost:3000/mcp
+```
+
+Or test with curl:
+```bash
+curl http://localhost:3000/mcp
 ```
 
 ## 📖 Usage Guide

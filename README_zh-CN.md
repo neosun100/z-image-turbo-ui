@@ -126,29 +126,34 @@ cd backend
 python main.py
 ```
 
-2. **在 Claude Desktop 中安装 MCP 服务器：**
+2. **启动 MCP 服务器：**
 ```bash
-# 安装依赖
+# 先安装依赖
 pip install mcp httpx
 
-# 添加到 Claude Desktop 配置
-# macOS: ~/Library/Application Support/Claude/claude_desktop_config.json
-# Windows: %APPDATA%\Claude\claude_desktop_config.json
+# 运行 MCP 服务器
+python mcp_server.py
 ```
 
-添加此配置：
+MCP 服务器将在 `http://localhost:3000/mcp` 启动
+
+3. **从 Claude Desktop 连接：**
+
+添加到 Claude Desktop 配置文件：
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
 ```json
 {
   "mcpServers": {
     "z-image-turbo": {
-      "command": "python",
-      "args": ["/path/to/z-image-turbo/mcp_server.py"]
+      "url": "http://localhost:3000/mcp"
     }
   }
 }
 ```
 
-3. **在 Claude 或其他 MCP 客户端中使用：**
+4. **在 Claude 中使用：**
 ```
 生成一张山脉日落的图片，分辨率 1920x1080
 ```
@@ -183,7 +188,13 @@ generate_image(
 ### MCP 资源
 
 #### `preset://resolutions`
-获取 51+ 种分辨率预设的完整列表，按宽高比组织（1:1, 3:4, 4:3, 16:9, 9:16, 21:9, 9:21, 32:9, 9:32）。
+获取 51+ 种分辨率预设的完整列表，包含精确尺寸，按宽高比组织：
+- 方形 (1:1): 512×512, 768×768, 1024×1024, 1536×1536, 2048×2048
+- 竖屏 (3:4): 768×1024, 1152×1536, 1536×2048, 1728×2304
+- 横屏 (4:3): 1024×768, 1536×1152, 2048×1536, 2304×1728
+- 宽屏 (16:9 & 9:16): 1280×720, 1920×1080, 2560×1440 等
+- 超宽 (21:9 & 9:21): 1344×576, 1680×720, 2352×1008 等
+- 极宽 (32:9 & 9:32): 1792×512, 2560×720, 3200×912 等
 
 ### MCP 提示词模板
 
@@ -205,13 +216,20 @@ create_prompt_template(
 
 ### 测试 MCP 服务器
 
-直接测试 MCP 服务器：
+使用 MCP Inspector 测试服务器：
 ```bash
 # 安装 MCP inspector
 npm install -g @modelcontextprotocol/inspector
 
 # 运行 inspector
-npx @modelcontextprotocol/inspector python mcp_server.py
+npx @modelcontextprotocol/inspector
+
+# 连接到：http://localhost:3000/mcp
+```
+
+或使用 curl 测试：
+```bash
+curl http://localhost:3000/mcp
 ```
 
 ## 📖 使用指南
