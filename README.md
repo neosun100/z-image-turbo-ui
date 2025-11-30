@@ -263,4 +263,8 @@ This project is licensed under Apache 2.0 - see [LICENSE](LICENSE) file
 
 **⭐ If this project helps you, please give it a Star!**
 
+### 📱 Follow for More AI Tools & Updates
+
+<img src="https://img.aws.xin/uPic/扫码_搜索联合传播样式-标准色版.png" width="200" alt="WeChat Official Account" />
+
 </div>

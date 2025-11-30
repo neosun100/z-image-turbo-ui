@@ -263,4 +263,8 @@ Issue と Pull Request を歓迎します！
 
 **⭐ このプロジェクトが役に立ったら、Star をください！**
 
+### 📱 WeChat 公式アカウントで最新の AI ツールと更新情報をフォロー
+
+<img src="https://img.aws.xin/uPic/扫码_搜索联合传播样式-标准色版.png" width="200" alt="WeChat 公式アカウント" />
+
 </div>
