@@ -11,14 +11,13 @@ const translations = {
     history: '历史', clearHistory: '清空历史', download: '下载', downloadAll: '下载全部', regenerate: '重新生成',
     square: '方形', portrait: '竖屏', landscape: '横屏', wide: '宽屏', random: '随机', help: '帮助',
     progress: '进度', of: '/', resolutionNote: '分辨率必须是16的倍数',
-    // 新增分辨率预设
-    small: '小尺寸', medium: '中尺寸', large: '大尺寸', xlarge: '超大',
-    sq512: '方形512', sq768: '方形768', sq1024: '方形1K', sq1536: '方形1.5K', sq2048: '方形2K',
-    pt768: '竖屏768', pt1024: '竖屏1K', pt1536: '竖屏1.5K',
-    ls1024: '横屏1K', ls1536: '横屏1.5K', ls2048: '横屏2K',
-    hd720: 'HD 720p', hd1080: 'Full HD', hd1440: '2K QHD', hd2160: '4K UHD',
-    ig: 'Instagram', igStory: 'IG故事', fb: 'Facebook', twitter: 'Twitter',
-    phone: '手机壁纸', desktop: '桌面壁纸', ultrawide: '超宽屏'
+    squareRatio: '方形 (1:1)', portraitRatio: '{t.portraitRatio}', landscapeRatio: '{t.landscapeRatio}',
+    widescreenLandscape: '{t.widescreenLandscape}', widescreenPortrait: '{t.widescreenPortrait}',
+    ultrawideLandscape: '{t.ultrawideLandscape}', ultrawidePortrait: '{t.ultrawidePortrait}',
+    extremeWideLandscape: '{t.extremeWideLandscape}', extremeWidePortrait: '{t.extremeWidePortrait}',
+    modelInfo: '模型信息', modelName: '模型名称', architecture: '架构', paramCount: '参数量',
+    vramUsage: '显存占用', recommendedSteps: '推荐步数', maxResolution: '最大分辨率',
+    mcpSupport: 'MCP 协议支持', mcpEnabled: '已启用 MCP 服务器'
   },
   'zh-TW': {
     title: 'Z-Image-Turbo', subtitle: '6B參數', prompt: '輸入提示詞...', negativePrompt: '負面提示詞（可選）',
@@ -26,7 +25,14 @@ const translations = {
     dimensions: '尺寸', seed: '隨機種子', numImages: '生成數量', enhancePrompt: '增強提示詞',
     history: '歷史', clearHistory: '清空歷史', download: '下載', downloadAll: '下載全部', regenerate: '重新生成',
     square: '方形', portrait: '豎屏', landscape: '橫屏', wide: '寬屏', random: '隨機', help: '幫助',
-    progress: '進度', of: '/', resolutionNote: '分辨率必須是16的倍數'
+    progress: '進度', of: '/', resolutionNote: '分辨率必須是16的倍數',
+    squareRatio: '方形 (1:1)', portraitRatio: '豎屏 (3:4)', landscapeRatio: '橫屏 (4:3)',
+    widescreenLandscape: '寬屏橫向 (16:9)', widescreenPortrait: '寬屏豎向 (9:16)',
+    ultrawideLandscape: '超寬橫向 (21:9)', ultrawidePortrait: '超寬豎向 (9:21)',
+    extremeWideLandscape: '極寬橫向 (32:9)', extremeWidePortrait: '極寬豎向 (9:32)',
+    modelInfo: '模型資訊', modelName: '模型名稱', architecture: '架構', paramCount: '參數量',
+    vramUsage: '顯存佔用', recommendedSteps: '推薦步數', maxResolution: '最大解析度',
+    mcpSupport: 'MCP 協議支援', mcpEnabled: '已啟用 MCP 伺服器'
   },
   'en': {
     title: 'Z-Image-Turbo', subtitle: '6B Parameters', prompt: 'Enter your prompt...', negativePrompt: 'Negative prompt (optional)',
@@ -34,7 +40,14 @@ const translations = {
     dimensions: 'Dimensions', seed: 'Seed', numImages: 'Batch Size', enhancePrompt: 'Enhance Prompt',
     history: 'History', clearHistory: 'Clear History', download: 'Download', downloadAll: 'Download All', regenerate: 'Regenerate',
     square: 'Square', portrait: 'Portrait', landscape: 'Landscape', wide: 'Wide', random: 'Random', help: 'Help',
-    progress: 'Progress', of: '/', resolutionNote: 'Resolution must be multiple of 16'
+    progress: 'Progress', of: '/', resolutionNote: 'Resolution must be multiple of 16',
+    squareRatio: 'Square (1:1)', portraitRatio: 'Portrait (3:4)', landscapeRatio: 'Landscape (4:3)',
+    widescreenLandscape: 'Widescreen Landscape (16:9)', widescreenPortrait: 'Widescreen Portrait (9:16)',
+    ultrawideLandscape: 'Ultrawide Landscape (21:9)', ultrawidePortrait: 'Ultrawide Portrait (9:21)',
+    extremeWideLandscape: 'Extreme Wide Landscape (32:9)', extremeWidePortrait: 'Extreme Wide Portrait (9:32)',
+    modelInfo: 'Model Info', modelName: 'Model Name', architecture: 'Architecture', paramCount: 'Parameters',
+    vramUsage: 'VRAM Usage', recommendedSteps: 'Recommended Steps', maxResolution: 'Max Resolution',
+    mcpSupport: 'MCP Protocol Support', mcpEnabled: 'MCP Server Enabled'
   },
   'ja': {
     title: 'Z-Image-Turbo', subtitle: '6Bパラメータ', prompt: 'プロンプトを入力...', negativePrompt: 'ネガティブプロンプト（オプション）',
@@ -42,7 +55,14 @@ const translations = {
     dimensions: 'サイズ', seed: 'シード', numImages: 'バッチサイズ', enhancePrompt: 'プロンプト強化',
     history: '履歴', clearHistory: '履歴をクリア', download: 'ダウンロード', downloadAll: '全てダウンロード', regenerate: '再生成',
     square: '正方形', portrait: '縦', landscape: '横', wide: 'ワイド', random: 'ランダム', help: 'ヘルプ',
-    progress: '進捗', of: '/', resolutionNote: '解像度は16の倍数である必要があります'
+    progress: '進捗', of: '/', resolutionNote: '解像度は16の倍数である必要があります',
+    squareRatio: '正方形 (1:1)', portraitRatio: '縦画面 (3:4)', landscapeRatio: '横画面 (4:3)',
+    widescreenLandscape: 'ワイドスクリーン横 (16:9)', widescreenPortrait: 'ワイドスクリーン縦 (9:16)',
+    ultrawideLandscape: 'ウルトラワイド横 (21:9)', ultrawidePortrait: 'ウルトラワイド縦 (9:21)',
+    extremeWideLandscape: '超ワイド横 (32:9)', extremeWidePortrait: '超ワイド縦 (9:32)',
+    modelInfo: 'モデル情報', modelName: 'モデル名', architecture: 'アーキテクチャ', paramCount: 'パラメータ数',
+    vramUsage: 'VRAM使用量', recommendedSteps: '推奨ステップ数', maxResolution: '最大解像度',
+    mcpSupport: 'MCPプロトコル対応', mcpEnabled: 'MCPサーバー有効'
   }
 }
 
@@ -314,7 +334,7 @@ function App() {
               </div>
               
               <div style={{ marginBottom: '12px' }}>
-                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>方形 (1:1)</div>
+                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>{t.squareRatio}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px', marginBottom: '12px' }}>
                   {[
                     { label: '512', w: 512, h: 512 },
@@ -331,7 +351,7 @@ function App() {
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>竖屏 (3:4)</div>
+                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>{t.portraitRatio}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginBottom: '12px' }}>
                   {[
                     { label: '768×1024', w: 768, h: 1024 },
@@ -351,7 +371,7 @@ function App() {
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>横屏 (4:3)</div>
+                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>{t.landscapeRatio}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginBottom: '12px' }}>
                   {[
                     { label: '1024×768', w: 1024, h: 768 },
@@ -371,7 +391,7 @@ function App() {
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>宽屏横向 (16:9)</div>
+                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>{t.widescreenLandscape}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginBottom: '12px' }}>
                   {[
                     { label: '1280×720', w: 1280, h: 720 },
@@ -389,7 +409,7 @@ function App() {
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>宽屏竖向 (9:16)</div>
+                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>{t.widescreenPortrait}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginBottom: '12px' }}>
                   {[
                     { label: '720×1280', w: 720, h: 1280 },
@@ -407,7 +427,7 @@ function App() {
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>超宽横向 (21:9)</div>
+                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>{t.ultrawideLandscape}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginBottom: '12px' }}>
                   {[
                     { label: '1344×576', w: 1344, h: 576 },
@@ -425,7 +445,7 @@ function App() {
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>超宽竖向 (9:21)</div>
+                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>{t.ultrawidePortrait}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginBottom: '12px' }}>
                   {[
                     { label: '576×1344', w: 576, h: 1344 },
@@ -443,7 +463,7 @@ function App() {
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>极宽横向 (32:9)</div>
+                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>{t.extremeWideLandscape}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginBottom: '12px' }}>
                   {[
                     { label: '1792×512', w: 1792, h: 512 },
@@ -461,7 +481,7 @@ function App() {
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>极宽竖向 (9:32)</div>
+                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px', fontWeight: 600 }}>{t.extremeWidePortrait}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', marginBottom: '12px' }}>
                   {[
                     { label: '512×1792', w: 512, h: 1792 },
@@ -514,32 +534,38 @@ function App() {
               <label style={{ fontSize: '14px', flex: 1 }}>{t.enhancePrompt}</label>
             </div>
 
-            <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#667eea', marginBottom: '12px' }}>📊 模型信息</div>
-              <div style={{ fontSize: '12px', color: '#aaa', lineHeight: '1.8' }}>
+            <div style={{ marginTop: '16px', padding: '16px', background: theme.inputBg, borderRadius: '10px', border: `1px solid ${theme.inputBorder}` }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#667eea', marginBottom: '12px' }}>📊 {t.modelInfo}</div>
+              <div style={{ fontSize: '12px', color: theme.textSecondary, lineHeight: '1.8' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span>模型名称:</span>
-                  <span style={{ color: '#fff', fontWeight: 500 }}>Z-Image-Turbo</span>
+                  <span>{t.modelName}:</span>
+                  <span style={{ color: theme.text, fontWeight: 500 }}>Z-Image-Turbo</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span>参数量:</span>
-                  <span style={{ color: '#fff', fontWeight: 500 }}>6B</span>
+                  <span>{t.paramCount}:</span>
+                  <span style={{ color: theme.text, fontWeight: 500 }}>6B</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span>显存占用:</span>
-                  <span style={{ color: '#fff', fontWeight: 500 }}>~12-16 GB</span>
+                  <span>{t.vramUsage}:</span>
+                  <span style={{ color: theme.text, fontWeight: 500 }}>~12-16 GB</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span>推荐步数:</span>
-                  <span style={{ color: '#fff', fontWeight: 500 }}>8 步</span>
+                  <span>{t.recommendedSteps}:</span>
+                  <span style={{ color: theme.text, fontWeight: 500 }}>8</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span>最大分辨率:</span>
-                  <span style={{ color: '#fff', fontWeight: 500 }}>2048×2048</span>
+                  <span>{t.maxResolution}:</span>
+                  <span style={{ color: theme.text, fontWeight: 500 }}>2048×2048</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>架构:</span>
-                  <span style={{ color: '#fff', fontWeight: 500 }}>S3-DiT</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span>{t.architecture}:</span>
+                  <span style={{ color: theme.text, fontWeight: 500 }}>S3-DiT</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${theme.inputBorder}` }}>
+                  <span>{t.mcpSupport}:</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', borderRadius: '6px', fontSize: '11px', fontWeight: 600 }}>
+                    ✓ {t.mcpEnabled}
+                  </span>
                 </div>
               </div>
             </div>
