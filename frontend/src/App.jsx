@@ -62,7 +62,6 @@ function App() {
   const [negativePrompt, setNegativePrompt] = useState('')
   const [images, setImages] = useState([])
   const [loading, setLoading] = useState(false)
-  const [progress, setProgress] = useState({ current: 0, total: 0 })
   const [showHistory, setShowHistory] = useState(false)
   const [history, setHistory] = useState([])
   const [settings, setSettings] = useState({
@@ -70,8 +69,6 @@ function App() {
     seed: -1, num_images: 1, enhance_prompt: false
   })
   const [logs, setLogs] = useState([])
-  const [realProgress, setRealProgress] = useState(0)
-  const [elapsedTime, setElapsedTime] = useState(0)
   const [selectedImageIndex, setSelectedImageIndex] = useState(null)
   const [darkMode, setDarkMode] = useState(true)
 
@@ -132,11 +129,8 @@ function App() {
   const generate = async () => {
     if (!prompt) return
     setLoading(true)
-    setProgress({ current: 0, total: settings.num_images })
     setImages([])
     setLogs([])
-    setRealProgress(0)
-    setElapsedTime(0)
     
     try {
       const response = await fetch('/generate/stream', {
@@ -169,18 +163,12 @@ function App() {
               if (data.type === 'log') {
                 setLogs(prev => [...prev, { time: new Date().toLocaleTimeString(), message: data.message }])
               } else if (data.type === 'progress') {
-                setRealProgress(data.progress)
-                setElapsedTime(data.elapsed)
-                if (data.current && data.total) {
-                  setProgress({ current: data.current, total: data.total })
-                }
+                // Just log progress, no UI update needed
               } else if (data.type === 'complete') {
                 // Fetch images separately
                 const imgRes = await fetch(`/get_images/${data.session_id}`)
                 const imgData = await imgRes.json()
                 setImages(imgData.images)
-                setElapsedTime(data.elapsed)
-                setRealProgress(100)
                 fetchHistory()
                 setLoading(false)
               } else if (data.type === 'error') {
@@ -237,7 +225,7 @@ function App() {
         style={{ 
           position: 'fixed', 
           top: '20px', 
-          right: '20px', 
+          left: '540px', 
           zIndex: 10000,
           display: 'flex',
           alignItems: 'center',
@@ -569,14 +557,9 @@ function App() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         
         {loading && (
-          <div style={{ padding: '16px 32px', background: 'rgba(0,0,0,0.5)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-              <span>进度: {realProgress}%</span>
-              <span>已用时间: {elapsedTime.toFixed(1)}秒</span>
-            </div>
-            <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-              <div className="progress-bar" style={{ width: `${realProgress}%`, transition: 'width 0.3s' }} />
-            </div>
+          <div style={{ padding: '20px 32px', background: 'rgba(0,0,0,0.5)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Loader2 className="animate-spin" size={20} style={{ color: '#667eea' }} />
+            <span style={{ fontSize: '14px', color: '#aaa' }}>正在拼命生成中，请耐心等待...</span>
           </div>
         )}
         
