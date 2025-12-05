@@ -4,10 +4,12 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List, Any
 try:
-    from diffusers import ZImagePipeline
+    from diffusers import ZImagePipeline, OvisImagePipeline, Flux2Pipeline
 except ImportError:
-    print("ZImagePipeline not found. Install diffusers from source.")
+    print("Some pipelines not found. Installing diffusers from source may be required.")
     ZImagePipeline = None
+    OvisImagePipeline = None
+    Flux2Pipeline = None
 
 import torch
 import io
@@ -36,7 +38,7 @@ app.add_middleware(
 # Create MCP server
 mcp = FastMCP(
     "Z-Image-Turbo",
-    instructions="Text-to-image generation using Tongyi-MAI Z-Image-Turbo model. Supports 51+ resolution presets and custom parameters.",
+    instructions="Text-to-image generation using multiple diffusion models. Supports 51+ resolution presets and custom parameters.",
     json_response=True,
     stateless_http=True
 )
@@ -44,6 +46,7 @@ mcp = FastMCP(
 CONFIG_FILE = "../config.json"
 HISTORY_FILE = "generation_history.json"
 PRESETS_FILE = "presets.json"
+MODELS_CONFIG_FILE = "models_config.json"
 
 def load_config():
     if os.path.exists(CONFIG_FILE):
@@ -93,6 +96,32 @@ def save_presets(presets):
     except Exception as e:
         print(f"Error saving presets: {e}")
 
+def load_models_config():
+    """加载模型配置"""
+    if os.path.exists(MODELS_CONFIG_FILE):
+        try:
+            with open(MODELS_CONFIG_FILE, "r") as f:
+                return json.load(f)
+        except:
+            pass
+    return {"models": [], "current_model": "Tongyi-MAI/Z-Image-Turbo"}
+
+def save_models_config(config):
+    """保存模型配置"""
+    try:
+        with open(MODELS_CONFIG_FILE, "w") as f:
+            json.dump(config, f, indent=2)
+    except Exception as e:
+        print(f"Error saving models config: {e}")
+
+def get_model_info(model_id):
+    """获取模型信息"""
+    models_cfg = load_models_config()
+    for model in models_cfg.get("models", []):
+        if model["id"] == model_id:
+            return model
+    return None
+
 model_config = load_config()
 if "cpu_offload" not in model_config:
     model_config["cpu_offload"] = False
@@ -100,34 +129,115 @@ if "flash_attention" not in model_config:
     model_config["flash_attention"] = False
 if "compile_model" not in model_config:
     model_config["compile_model"] = False
+if "keep_in_memory" not in model_config:
+    model_config["keep_in_memory"] = False  # 新增：内存常驻模式
 
 pipe = None
+pipe_on_gpu = False  # 跟踪模型是否在GPU上
+last_used_time = None  # 跟踪最后使用时间
+current_model_id = None  # 当前加载的模型ID
+IDLE_TIMEOUT = 30  # 5分钟空闲超时
 
-def get_pipeline():
-    global pipe
+async def auto_unload_monitor():
+    """后台任务：监控并自动卸载空闲模型"""
+    global last_used_time
+    while True:
+        await asyncio.sleep(10)  # 每分钟检查一次
+        if last_used_time and pipe is not None:
+            idle_time = time.time() - last_used_time
+            if idle_time >= IDLE_TIMEOUT:
+                if model_config.get("keep_in_memory", False):
+                    # 内存常驻模式：只从GPU移到CPU
+                    unload_from_gpu()
+                    print(f"Auto-unloaded from GPU after {idle_time:.0f}s idle")
+                else:
+                    # 普通模式：完全卸载
+                    unload_model()
+                    print(f"Auto-unloaded model after {idle_time:.0f}s idle")
+                last_used_time = None
+
+def get_pipeline(requested_model_id=None):
+    global pipe, pipe_on_gpu, last_used_time, current_model_id
+    
+    # 更新最后使用时间
+    last_used_time = time.time()
+    
+    # 确定要使用的模型ID
+    target_model_id = requested_model_id or model_config.get('model_id', 'Tongyi-MAI/Z-Image-Turbo')
+    
+    # 如果请求的模型与当前加载的模型不同，先卸载当前模型
+    if pipe is not None and current_model_id != target_model_id:
+        print(f"Switching from {current_model_id} to {target_model_id}")
+        unload_model()
+    
     if pipe is None:
-        if ZImagePipeline is None:
-            raise HTTPException(status_code=500, detail="ZImagePipeline not available")
-            
-        print(f"Loading model {model_config['model_id']}...")
+        # 获取模型信息
+        model_info = get_model_info(target_model_id)
+        if not model_info:
+            raise HTTPException(status_code=404, detail=f"Model {target_model_id} not found in config")
         
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        dtype = torch.bfloat16 if device == "cuda" else torch.float32
-        
-        pipe = ZImagePipeline.from_pretrained(
-            model_config['model_id'],
-            torch_dtype=dtype,
-            low_cpu_mem_usage=False,
-            cache_dir=model_config.get('cache_dir')
-        )
-        
-        if model_config.get("cpu_offload", False) and device == "cuda":
-            print("Enabling CPU Offload")
-            pipe.enable_model_cpu_offload()
+        # 根据模型类型选择Pipeline类
+        pipeline_class = None
+        if model_info["type"] == "zimage":
+            if ZImagePipeline is None:
+                raise HTTPException(status_code=500, detail="ZImagePipeline not available")
+            pipeline_class = ZImagePipeline
+        elif model_info["type"] == "ovis":
+            if OvisImagePipeline is None:
+                raise HTTPException(status_code=500, detail="OvisImagePipeline not available. Install: pip install git+https://github.com/huggingface/diffusers")
+            pipeline_class = OvisImagePipeline
+        elif model_info["type"] == "flux2":
+            if Flux2Pipeline is None:
+                raise HTTPException(status_code=500, detail="Flux2Pipeline not available")
+            pipeline_class = Flux2Pipeline
         else:
-            pipe.to(device)
+            raise HTTPException(status_code=500, detail=f"Unknown model type: {model_info['type']}")
         
-        if model_config.get("flash_attention", False):
+        print(f"Loading model {target_model_id} ({model_info['name']})...")
+        
+        dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+        
+        # FLUX.2-dev 使用 GPU 1 (空闲 44GB)
+        if model_info["type"] == "flux2" and torch.cuda.is_available():
+            print("Loading FLUX.2-dev on GPU 1 with CPU offload...")
+            pipe = pipeline_class.from_pretrained(
+                target_model_id,
+                torch_dtype=dtype,
+                cache_dir=model_config.get('cache_dir')
+            )
+            current_model_id = target_model_id
+            # 使用 sequential CPU offload 并指定 GPU 1
+            print("Enabling sequential CPU offload on GPU 1...")
+            pipe.enable_sequential_cpu_offload(gpu_id=1)
+            pipe_on_gpu = True
+            print("FLUX.2-dev loaded on GPU 1 with CPU offload")
+        else:
+            # 其他模型使用原有逻辑
+            device = "cpu" if model_config.get("keep_in_memory", False) else ("cuda" if torch.cuda.is_available() else "cpu")
+            
+            pipe = pipeline_class.from_pretrained(
+                target_model_id,
+                torch_dtype=dtype,
+                low_cpu_mem_usage=False,
+                cache_dir=model_config.get('cache_dir')
+            )
+            
+            current_model_id = target_model_id
+            
+            if model_config.get("keep_in_memory", False):
+                print("Model loaded to CPU memory (keep_in_memory mode)")
+                pipe.to("cpu")
+                pipe_on_gpu = False
+            elif model_config.get("cpu_offload", False) and torch.cuda.is_available():
+                print("Enabling CPU Offload")
+                pipe.enable_model_cpu_offload()
+                pipe_on_gpu = True
+            else:
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                pipe.to(device)
+                pipe_on_gpu = (device == "cuda")
+        
+        if model_config.get("flash_attention", False) and pipe_on_gpu:
             try:
                 pipe.transformer.set_attention_backend("flash")
                 print("Flash Attention enabled")
@@ -136,13 +246,57 @@ def get_pipeline():
         
         if model_config.get("compile_model", False):
             print("Compiling model (first run will be slow)...")
-            pipe.transformer.compile()
+            try:
+                pipe.transformer.compile()
+            except:
+                print("Model compilation not supported for this model type")
             
-        print(f"Model loaded on {device}")
+        print(f"Model loaded (GPU: {pipe_on_gpu})")
+    
+    # 如果是内存常驻模式且模型不在GPU上，快速转移到GPU
+    if model_config.get("keep_in_memory", False) and not pipe_on_gpu and torch.cuda.is_available():
+        print("Moving model from CPU to GPU...")
+        start = time.time()
+        pipe.to("cuda")
+        pipe_on_gpu = True
+        print(f"Model moved to GPU in {time.time()-start:.2f}s")
+    
     return pipe
+
+def unload_from_gpu():
+    """将模型从GPU移回CPU（内存常驻模式）"""
+    global pipe, pipe_on_gpu
+    if pipe is not None and pipe_on_gpu and model_config.get("keep_in_memory", False):
+        print("Moving model from GPU to CPU...")
+        pipe.to("cpu")
+        pipe_on_gpu = False
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        print("Model moved to CPU (kept in memory)")
+
+def unload_model():
+    """完全卸载模型"""
+    global pipe, pipe_on_gpu, current_model_id
+    if pipe is not None:
+        # 先移到CPU释放GPU显存
+        if pipe_on_gpu and torch.cuda.is_available():
+            pipe.to("cpu")
+            torch.cuda.empty_cache()
+        del pipe
+        pipe = None
+        pipe_on_gpu = False
+        current_model_id = None
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+        print("Model unloaded from memory")
 
 class SettingsRequest(BaseModel):
     cache_dir: Optional[str] = None
+    cpu_offload: bool = False
+    flash_attention: bool = False
+    compile_model: bool = False
+    keep_in_memory: bool = False  # 新增
     cpu_offload: bool = False
     flash_attention: bool = False
     compile_model: bool = False
@@ -158,8 +312,13 @@ async def set_model_path(req: SettingsRequest):
         model_config["cpu_offload"] = req.cpu_offload
         model_config["flash_attention"] = req.flash_attention
         model_config["compile_model"] = req.compile_model
+        model_config["keep_in_memory"] = req.keep_in_memory
         save_config(model_config)
-        pipe = None
+        
+        # 如果改变了内存常驻模式，需要重新加载
+        if pipe is not None:
+            unload_model()
+        
         return {"status": "success", "message": "Settings saved"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -178,6 +337,7 @@ class GenerateRequest(BaseModel):
     seed: int = -1
     num_images: int = 1  # Max 8
     enhance_prompt: bool = False
+    model_id: Optional[str] = None  # 可选：指定使用的模型
 
 @app.post("/generate/stream")
 async def generate_image_stream(req: GenerateRequest):
@@ -190,7 +350,7 @@ async def generate_image_stream(req: GenerateRequest):
             yield f"data: {json.dumps({'type': 'log', 'message': '开始加载模型...'}, ensure_ascii=False)}\n\n"
             await asyncio.sleep(0)
             
-            pipeline = get_pipeline()
+            pipeline = get_pipeline(req.model_id)
             device = "cuda" if torch.cuda.is_available() else "cpu"
             
             yield f"data: {json.dumps({'type': 'log', 'message': f'模型已加载到 {device}'}, ensure_ascii=False)}\n\n"
@@ -221,16 +381,22 @@ async def generate_image_stream(req: GenerateRequest):
                 # Start generation in background
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(
-                        pipeline,
-                        prompt=prompt,
-                        negative_prompt=req.negative_prompt,
-                        height=req.height,
-                        width=req.width,
-                        num_inference_steps=req.steps,
-                        guidance_scale=req.guidance_scale,
-                        generator=generator
-                    )
+                    # 根据模型类型构建参数
+                    model_info = get_model_info(current_model_id)
+                    params = {
+                        'prompt': prompt,
+                        'height': req.height,
+                        'width': req.width,
+                        'num_inference_steps': req.steps,
+                        'guidance_scale': req.guidance_scale,
+                        'generator': generator
+                    }
+                    
+                    # Flux2Pipeline不支持negative_prompt
+                    if model_info and model_info.get('type') != 'flux2':
+                        params['negative_prompt'] = req.negative_prompt or ""
+                    
+                    future = executor.submit(pipeline, **params)
                     
                     # Send progress updates while generating
                     step = 0
@@ -242,7 +408,15 @@ async def generate_image_stream(req: GenerateRequest):
                             yield f"data: {json.dumps({'type': 'log', 'message': f'推理中... {step_progress}%'}, ensure_ascii=False)}\n\n"
                             await asyncio.sleep(0)
                     
-                    result = future.result().images[0]
+                    result_obj = future.result()
+                    
+                    # 处理不同Pipeline的返回值
+                    if hasattr(result_obj, 'images') and result_obj.images:
+                        result = result_obj.images[0]
+                    elif isinstance(result_obj, list) and len(result_obj) > 0:
+                        result = result_obj[0]
+                    else:
+                        raise Exception("Pipeline returned unexpected format")
                 
                 img_time = time.time() - img_start
                 yield f"data: {json.dumps({'type': 'log', 'message': f'图片 {i+1} 生成完成 (耗时: {img_time:.2f}秒, seed: {seed})'}, ensure_ascii=False)}\n\n"
@@ -308,7 +482,7 @@ def generate_image(req: GenerateRequest):
         raise HTTPException(status_code=400, detail="Dimensions must be divisible by 16")
 
     try:
-        pipeline = get_pipeline()
+        pipeline = get_pipeline(req.model_id)
         device = "cuda" if torch.cuda.is_available() else "cpu"
         
         prompt = req.prompt
@@ -320,18 +494,33 @@ def generate_image(req: GenerateRequest):
             seed = req.seed if req.seed != -1 else torch.randint(0, 2**32, (1,)).item()
             generator = torch.Generator(device).manual_seed(seed)
             
-            result = pipeline(
-                prompt=prompt,
-                negative_prompt=req.negative_prompt,
-                height=req.height,
-                width=req.width,
-                num_inference_steps=req.steps,
-                guidance_scale=req.guidance_scale,
-                generator=generator,
-            ).images[0]
+            # 根据模型类型构建参数
+            model_info = get_model_info(current_model_id)
+            params = {
+                'prompt': prompt,
+                'height': req.height,
+                'width': req.width,
+                'num_inference_steps': req.steps,
+                'guidance_scale': req.guidance_scale,
+                'generator': generator,
+            }
+            
+            # Flux2Pipeline不支持negative_prompt
+            if model_info and model_info.get('type') != 'flux2':
+                params['negative_prompt'] = req.negative_prompt or ""
+            
+            result = pipeline(**params)
+            
+            # 处理不同Pipeline的返回值
+            if hasattr(result, 'images') and result.images:
+                image = result.images[0]
+            elif isinstance(result, list) and len(result) > 0:
+                image = result[0]
+            else:
+                raise Exception("Pipeline returned unexpected format")
             
             buffered = io.BytesIO()
-            result.save(buffered, format="PNG")
+            image.save(buffered, format="PNG")
             img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
             images.append({
                 "image": f"data:image/png;base64,{img_str}",
@@ -446,7 +635,97 @@ def gpu_info():
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model_loaded": pipe is not None}
+    return {
+        "status": "ok", 
+        "model_loaded": pipe is not None,
+        "model_on_gpu": pipe_on_gpu if pipe is not None else False,
+        "keep_in_memory": model_config.get("keep_in_memory", False),
+        "current_model": current_model_id
+    }
+
+@app.get("/api/models")
+def get_models():
+    """获取所有可用模型列表"""
+    return {
+        "models": [{
+            "id": "Tongyi-MAI/Z-Image-Turbo",
+            "name": "Z-Image-Turbo",
+            "type": "text2img"
+        }],
+        "current_model": current_model_id or "Tongyi-MAI/Z-Image-Turbo"
+    }
+
+@app.post("/api/switch-model")
+def switch_model(request: dict):
+    """切换模型"""
+    model_id = request.get("model_id")
+    if not model_id:
+        raise HTTPException(status_code=400, detail="model_id is required")
+    
+    # 验证模型是否存在
+    model_info = get_model_info(model_id)
+    if not model_info:
+        raise HTTPException(status_code=404, detail=f"Model {model_id} not found")
+    
+    # 更新配置
+    model_config['model_id'] = model_id
+    save_config(model_config)
+    
+    # 更新models_config中的current_model
+    models_cfg = load_models_config()
+    models_cfg['current_model'] = model_id
+    save_models_config(models_cfg)
+    
+    # 卸载当前模型（下次generate时会自动加载新模型）
+    if pipe is not None:
+        unload_model()
+    
+    return {
+        "status": "success",
+        "message": f"Switched to {model_info['name']}",
+        "model": model_info
+    }
+
+@app.post("/api/move-to-gpu")
+def move_to_gpu():
+    """手动将模型从CPU移到GPU"""
+    global pipe, pipe_on_gpu
+    if pipe is None:
+        raise HTTPException(status_code=400, detail="Model not loaded")
+    if pipe_on_gpu:
+        return {"status": "success", "message": "Model already on GPU"}
+    
+    print("Manually moving model to GPU...")
+    start = time.time()
+    pipe.to("cuda")
+    pipe_on_gpu = True
+    elapsed = time.time() - start
+    return {"status": "success", "message": f"Model moved to GPU in {elapsed:.2f}s"}
+
+@app.post("/api/move-to-cpu")
+def move_to_cpu():
+    """手动将模型从GPU移到CPU"""
+    unload_from_gpu()
+    return {"status": "success", "message": "Model moved to CPU"}
+
+@app.post("/api/unload")
+def api_unload():
+    """完全卸载模型"""
+    unload_model()
+    return {"status": "success", "message": "Model unloaded"}
+
+@app.post("/api/preload")
+def preload_model():
+    """预加载模型到内存"""
+    try:
+        get_pipeline()
+        return {
+            "status": "success", 
+            "message": "Model preloaded",
+            "on_gpu": pipe_on_gpu
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ============ MCP Integration ============
 
@@ -561,6 +840,12 @@ def create_prompt_template(subject: str, style: str = "photorealistic") -> str:
     
     style_keywords = styles.get(style.lower(), styles["photorealistic"])
     return f"{subject}, {style_keywords}"
+
+# 启动事件：启动自动监控任务
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(auto_unload_monitor())
+    print("Auto-unload monitor started")
 
 # Mount MCP server at /mcp
 app.mount("/mcp", mcp.streamable_http_app())
